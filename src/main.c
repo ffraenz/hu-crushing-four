@@ -9,13 +9,13 @@
 // *****************
 
 // Initial and minimum column array size
-#define MIN_COL_SIZE 10
+#define MIN_COL_SIZE 8
 
 // Initial playground changes array size
-#define INITIAL_CHANGES_SIZE 100
+#define INITIAL_CHANGES_SIZE 80
 
 // Initial piece removal array size
-#define INITIAL_REMOVAL_SIZE 100
+#define INITIAL_REMOVAL_SIZE 80
 
 // Empty piece value
 #define PIECE_EMPTY 255
@@ -162,7 +162,7 @@ int main(int argc, char *argv[]) {
     playgroundPlacePiece(playground, x, p);
     
     if (debug) {
-      playgroundPrint(playground);
+      // playgroundPrint(playground);
     }
   }
 
@@ -258,7 +258,7 @@ void freePlayground(struct Playground* playground) {
  */
 struct Col* createCol(unsigned long size) {
   struct Col* col = (struct Col*)
-    malloc(sizeof(struct Col) + sizeof(piece) * (size - 1));
+    malloc(sizeof(struct Col) + sizeof(piece) * size);
   if (!col) {
     handleOutOfMemory("creating a column with size %lu");
   }
@@ -463,9 +463,35 @@ void playgroundPlacePiece(struct Playground* playground, long x, piece p) {
   struct Col* col = playgroundGetColAt(playground, x);
 
   if (col->count == col->size) {
-    // TODO: Dynamically resize column node
-    printf("Column at %ld needs resizing\n", x);
-    exit(1);
+    // Double the column size by reallocating memory
+    unsigned long size = col->size * 2;
+    struct Col* expandedCol = (struct Col*)
+      realloc(col, sizeof(struct Col) + sizeof(piece) * size);
+    if (!expandedCol) {
+      handleOutOfMemory("expanding column size");
+    }
+    
+    // Update size
+    expandedCol->size = size;
+    
+    // Update pointers
+    if (expandedCol->next) {
+      expandedCol->next->prev = expandedCol;
+    } else {
+      playground->endCol = expandedCol;
+    }
+    if (expandedCol->prev) {
+      expandedCol->prev->next = expandedCol;
+    } else {
+      playground->startCol = expandedCol;
+    }
+    if (col == playground->originCol) {
+      playground->originCol = expandedCol;
+    }
+    if (col == playground->currentCol) {
+      playground->currentCol = expandedCol;
+    }
+    col = expandedCol;
   }
 
   // Append piece to the top

@@ -52,7 +52,7 @@
       </BuildableProductRunnable>
       <CommandLineArguments>
          <CommandLineArgument
-            argument = "&quot;/Users/ff/Library/Mobile Documents/com~apple~CloudDocs/University/DigiSys/Programmierprojekt/crushing-candy/tests/106-example.stdin&quot;"
+            argument = "&quot;/Users/ff/Library/Mobile Documents/com~apple~CloudDocs/University/DigiSys/Programmierprojekt/crushing-candy/tests/002-test-expand-cols.stdin&quot;"
             isEnabled = "YES">
          </CommandLineArgument>
       </CommandLineArguments>
