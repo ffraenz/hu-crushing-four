@@ -148,7 +148,7 @@ int main() {
   }
 
   // Print playground to stout
-  playgroundPrint(playground, true);
+  playgroundPrint(playground, false);
 
   // Dealloc used memory before quitting
   freePlayground(playground);

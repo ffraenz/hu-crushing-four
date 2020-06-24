@@ -25,32 +25,9 @@
 /* Begin PBXFileReference section */
 		A51A5AB8249F79C200E841E2 /* crushing-candy */ = {isa = PBXFileReference; explicitFileType = "compiled.mach-o.executable"; includeInIndex = 0; path = "crushing-candy"; sourceTree = BUILT_PRODUCTS_DIR; };
 		A51A5ABB249F79C200E841E2 /* main.c */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.c; path = main.c; sourceTree = "<group>"; };
-		A53032BF24A35EA400335718 /* example07.stdout */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text; path = example07.stdout; sourceTree = "<group>"; };
-		A53032C024A35EA400335718 /* example09.stdin */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text; path = example09.stdin; sourceTree = "<group>"; };
-		A53032C124A35EA400335718 /* example07.stdin */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text; path = example07.stdin; sourceTree = "<group>"; };
-		A53032C224A35EA400335718 /* example03.stdout */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text; path = example03.stdout; sourceTree = "<group>"; };
-		A53032C324A35EA400335718 /* example00.stdin */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text; path = example00.stdin; sourceTree = "<group>"; };
-		A53032C424A35EA400335718 /* example01.stdout */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text; path = example01.stdout; sourceTree = "<group>"; };
-		A53032C524A35EA400335718 /* example06.stdout */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text; path = example06.stdout; sourceTree = "<group>"; };
-		A53032C624A35EA400335718 /* example00.stdout */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text; path = example00.stdout; sourceTree = "<group>"; };
-		A53032C724A35EA400335718 /* example05.stdout */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text; path = example05.stdout; sourceTree = "<group>"; };
-		A53032C824A35EA400335718 /* example03.stdin */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text; path = example03.stdin; sourceTree = "<group>"; };
-		A53032C924A35EA400335718 /* example02.stdin */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text; path = example02.stdin; sourceTree = "<group>"; };
-		A53032CA24A35EA400335718 /* example01.stdin */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text; path = example01.stdin; sourceTree = "<group>"; };
-		A53032CB24A35EA400335718 /* example08.stdout */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text; path = example08.stdout; sourceTree = "<group>"; };
-		A53032CC24A35EA500335718 /* example11.stdout */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text; path = example11.stdout; sourceTree = "<group>"; };
-		A53032CD24A35EA500335718 /* example09.stdout */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text; path = example09.stdout; sourceTree = "<group>"; };
-		A53032CE24A35EA500335718 /* example12.stdout */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text; path = example12.stdout; sourceTree = "<group>"; };
-		A53032CF24A35EA500335718 /* example05.stdin */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text; path = example05.stdin; sourceTree = "<group>"; };
-		A53032D024A35EA500335718 /* example10.stdout */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text; path = example10.stdout; sourceTree = "<group>"; };
-		A53032D124A35EA500335718 /* example04.stdin */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text; path = example04.stdin; sourceTree = "<group>"; };
-		A53032D224A35EA500335718 /* example06.stdin */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text; path = example06.stdin; sourceTree = "<group>"; };
-		A53032D324A35EA500335718 /* example10.stdin */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text; path = example10.stdin; sourceTree = "<group>"; };
-		A53032D424A35EA500335718 /* example04.stdout */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text; path = example04.stdout; sourceTree = "<group>"; };
-		A53032D524A35EA500335718 /* example02.stdout */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text; path = example02.stdout; sourceTree = "<group>"; };
-		A53032D624A35EA500335718 /* example11.stdin */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text; path = example11.stdin; sourceTree = "<group>"; };
-		A53032D724A35EA500335718 /* example12.stdin */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text; path = example12.stdin; sourceTree = "<group>"; };
-		A53032D824A35EA500335718 /* example08.stdin */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text; path = example08.stdin; sourceTree = "<group>"; };
+		A53032D924A38DA300335718 /* README.md */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = net.daringfireball.markdown; path = README.md; sourceTree = "<group>"; };
+		A53032DA24A38DA300335718 /* test.sh */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.script.sh; path = test.sh; sourceTree = "<group>"; };
+		A53032DB24A3916700335718 /* make.sh */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.script.sh; path = make.sh; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -67,7 +44,9 @@
 		A51A5AAF249F79C200E841E2 = {
 			isa = PBXGroup;
 			children = (
-				A530328A24A35D9D00335718 /* test-cases */,
+				A53032DB24A3916700335718 /* make.sh */,
+				A53032D924A38DA300335718 /* README.md */,
+				A53032DA24A38DA300335718 /* test.sh */,
 				A51A5ABA249F79C200E841E2 /* src */,
 				A51A5AB9249F79C200E841E2 /* Products */,
 			);
@@ -87,39 +66,6 @@
 				A51A5ABB249F79C200E841E2 /* main.c */,
 			);
 			path = src;
-			sourceTree = "<group>";
-		};
-		A530328A24A35D9D00335718 /* test-cases */ = {
-			isa = PBXGroup;
-			children = (
-				A53032C324A35EA400335718 /* example00.stdin */,
-				A53032C624A35EA400335718 /* example00.stdout */,
-				A53032CA24A35EA400335718 /* example01.stdin */,
-				A53032C424A35EA400335718 /* example01.stdout */,
-				A53032C924A35EA400335718 /* example02.stdin */,
-				A53032D524A35EA500335718 /* example02.stdout */,
-				A53032C824A35EA400335718 /* example03.stdin */,
-				A53032C224A35EA400335718 /* example03.stdout */,
-				A53032D124A35EA500335718 /* example04.stdin */,
-				A53032D424A35EA500335718 /* example04.stdout */,
-				A53032CF24A35EA500335718 /* example05.stdin */,
-				A53032C724A35EA400335718 /* example05.stdout */,
-				A53032D224A35EA500335718 /* example06.stdin */,
-				A53032C524A35EA400335718 /* example06.stdout */,
-				A53032C124A35EA400335718 /* example07.stdin */,
-				A53032BF24A35EA400335718 /* example07.stdout */,
-				A53032D824A35EA500335718 /* example08.stdin */,
-				A53032CB24A35EA400335718 /* example08.stdout */,
-				A53032C024A35EA400335718 /* example09.stdin */,
-				A53032CD24A35EA500335718 /* example09.stdout */,
-				A53032D324A35EA500335718 /* example10.stdin */,
-				A53032D024A35EA500335718 /* example10.stdout */,
-				A53032D624A35EA500335718 /* example11.stdin */,
-				A53032CC24A35EA500335718 /* example11.stdout */,
-				A53032D724A35EA500335718 /* example12.stdin */,
-				A53032CE24A35EA500335718 /* example12.stdout */,
-			);
-			path = "test-cases";
 			sourceTree = "<group>";
 		};
 /* End PBXGroup section */
