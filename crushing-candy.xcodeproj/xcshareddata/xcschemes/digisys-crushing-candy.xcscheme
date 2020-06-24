@@ -50,6 +50,12 @@
             ReferencedContainer = "container:crushing-candy.xcodeproj">
          </BuildableReference>
       </BuildableProductRunnable>
+      <CommandLineArguments>
+         <CommandLineArgument
+            argument = "&quot;/Users/ff/Library/Mobile Documents/com~apple~CloudDocs/University/DigiSys/Programmierprojekt/crushing-candy/tests/106-example.stdin&quot;"
+            isEnabled = "YES">
+         </CommandLineArgument>
+      </CommandLineArguments>
    </LaunchAction>
    <ProfileAction
       buildConfiguration = "Release"

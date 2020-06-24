@@ -2,6 +2,7 @@
 #include <stdlib.h>
 #include <stdio.h>
 #include <stdbool.h>
+#include <string.h>
 
 // *****************
 // *   CONSTANTS   *
@@ -115,12 +116,17 @@ void playgroundRemoveLines(struct Playground* playground);
 void playgroundRemovePiece(struct Playground* playground, struct Col* col, unsigned long y);
 void playgroundTrackChange(struct Playground* playground, struct Col* col, unsigned long y);
 void playgroundCauseGravity(struct Playground* playground);
-void playgroundPrint(struct Playground* playground, bool debug);
+void playgroundPrint(struct Playground* playground);
 void handleOutOfMemory(char description[]);
 
 // ************
 // *   BODY   *
 // ************
+
+/**
+ * Global debug flag
+ */
+bool debug = false;
 
 /**
  * Global playground instance
@@ -131,24 +137,34 @@ struct Playground* playground;
  * Main entry point
  * @return Exit code
  */
-int main() {
+int main(int argc, char *argv[]) {
   // Create empty playground
   playground = createPlayground();
+  
+  // Debug mode: Run specific test case if first argument is set
+  if (argc == 2) {
+    debug = true;
+    freopen(argv[1], "r", stdin);
+  }
 
   // Read placements from stdin
   // TODO: Use getline(3) instead
   long x = 0;
   piece p = 0;
 
+  // Place each piece on the playground
   // "<color> <x>" color in [0; 254]; x in [-2^21; +2^21]
   while (fscanf(stdin, "%hu%ld", &p, &x) == 2) {
-    // Place each piece on the playground
     playgroundPlacePiece(playground, x, p);
-    // playgroundPrint(playground, true);
+    
+    if (debug) {
+      printf("Place piece %3hd at %ld\n", p, x);
+      playgroundPrint(playground);
+    }
   }
 
   // Print playground to stout
-  playgroundPrint(playground, false);
+  playgroundPrint(playground);
 
   // Dealloc used memory before quitting
   freePlayground(playground);
@@ -675,13 +691,13 @@ void playgroundCauseGravity(struct Playground* playground) {
  * Print playground
  * @param playground Pointer to playground struct to be printed
  */
-void playgroundPrint(struct Playground* playground, bool debug) {
+void playgroundPrint(struct Playground* playground) {
   // Iterate from the start col
   struct Col* col = playground->startCol;
   long x = playground->startColX;
 
   if (debug) {
-    printf("Playground: [%ld; %ld]\n", playground->startColX, playground->endColX);
+    printf("Playground: [%ld; %ld]", playground->startColX, playground->endColX);
   }
 
   while (col) {
@@ -713,6 +729,6 @@ void playgroundPrint(struct Playground* playground, bool debug) {
   }
 
   if (debug) {
-    printf("\n");
+    printf("\n\n");
   }
 }
