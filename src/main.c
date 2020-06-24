@@ -108,7 +108,7 @@ struct Playground {
 
 struct Playground* createPlayground(void);
 void freePlayground(struct Playground* playground);
-struct Col* createCol(unsigned long size);
+struct Col* createCol(void);
 struct Col* createPaddingCol(unsigned long size);
 struct Col* playgroundGetColAt(struct Playground* playground, long x);
 void playgroundPlacePiece(struct Playground* playground, long x, piece p);
@@ -199,7 +199,7 @@ struct Playground* createPlayground() {
     handleOutOfMemory("creating a playground");
   }
 
-  struct Col* col = createCol(MIN_COL_SIZE);
+  struct Col* col = createCol();
   playground->originCol = col;
   playground->startCol = col;
   playground->startColX = 0;
@@ -252,20 +252,19 @@ void freePlayground(struct Playground* playground) {
 }
 
 /**
- * Create a col node with the given initial piece.
- * @param size Size of pieces array
+ * Create a col node with the default initial size.
  * @return Pointer to new col node
  */
-struct Col* createCol(unsigned long size) {
+struct Col* createCol() {
   struct Col* col = (struct Col*)
-    malloc(sizeof(struct Col) + sizeof(piece) * size);
+    malloc(sizeof(struct Col) + sizeof(piece) * MIN_COL_SIZE);
   if (!col) {
     handleOutOfMemory("creating a column with size %lu");
   }
   col->type = COL_PIECES;
-  col->size = size;
+  col->size = MIN_COL_SIZE;
   col->count = 0;
-  col->changeY = size;
+  col->changeY = MIN_COL_SIZE;
   col->next = NULL;
   col->prev = NULL;
   return col;
@@ -338,7 +337,7 @@ struct Col* playgroundGetColAt(struct Playground* playground, long x) {
     }
 
     // Append new col
-    col = createCol(MIN_COL_SIZE);
+    col = createCol();
     playground->endCol->next = col;
     col->prev = playground->endCol;
     playground->endCol = col;
@@ -362,7 +361,7 @@ struct Col* playgroundGetColAt(struct Playground* playground, long x) {
     }
 
     // Prepend new col
-    col = createCol(MIN_COL_SIZE);
+    col = createCol();
     playground->startCol->prev = col;
     col->next = playground->startCol;
     playground->startCol = col;
@@ -408,7 +407,7 @@ struct Col* playgroundGetColAt(struct Playground* playground, long x) {
     lowerPadding->size -= i - x;
 
     // Append new col after lower padding
-    newCol = createCol(MIN_COL_SIZE);
+    newCol = createCol();
     newCol->prev = lowerPadding;
     lowerPadding->next = newCol;
 
@@ -427,7 +426,7 @@ struct Col* playgroundGetColAt(struct Playground* playground, long x) {
 
   if (col->type == COL_PADDING) {
     // Create new col and connect it to the lower neighbour
-    newCol = createCol(MIN_COL_SIZE);
+    newCol = createCol();
     newCol->prev = col->prev;
     col->prev->next = newCol;
 
@@ -471,7 +470,10 @@ void playgroundPlacePiece(struct Playground* playground, long x, piece p) {
       handleOutOfMemory("expanding column size");
     }
     
-    // Update size
+    // Update size and state
+    if (expandedCol->changeY == expandedCol->size) {
+      expandedCol->changeY = size;
+    }
     expandedCol->size = size;
     
     // Update pointers
