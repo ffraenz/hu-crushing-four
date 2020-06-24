@@ -155,10 +155,13 @@ int main(int argc, char *argv[]) {
   // Place each piece on the playground
   // "<color> <x>" color in [0; 254]; x in [-2^21; +2^21]
   while (fscanf(stdin, "%hu%ld", &p, &x) == 2) {
+    if (debug) {
+      printf("Place piece %3hd at %ld\n", p, x);
+    }
+    
     playgroundPlacePiece(playground, x, p);
     
     if (debug) {
-      printf("Place piece %3hd at %ld\n", p, x);
       playgroundPrint(playground);
     }
   }
@@ -385,8 +388,8 @@ struct Col* playgroundGetColAt(struct Playground* playground, long x) {
   } else {
     // Move iterator backward
     while (i > x) {
-      i -= col->type == COL_PADDING ? col->size : 1;
       col = col->prev;
+      i -= col->type == COL_PADDING ? col->size : 1;
     }
     if (i < x) {
       // Ran past the x col, col->next must be of type padding (with size > 1)
