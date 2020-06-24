@@ -162,7 +162,7 @@ int main(int argc, char *argv[]) {
     playgroundPlacePiece(playground, x, p);
     
     if (debug) {
-      // playgroundPrint(playground);
+      playgroundPrint(playground);
     }
   }
 
@@ -372,11 +372,10 @@ struct Col* playgroundGetColAt(struct Playground* playground, long x) {
 
   // The easiest cases of finding a col were tested above
   // Now we need to iterate to it (expensive)
-  // TODO: Start at iterator position
-  col = playground->originCol; // playground->currentCol;
-  long i = 0; // playground->currentX;
+  col = playground->currentCol;
+  long i = playground->currentX;
   struct Col* newCol;
-
+  
   // Move iterator until reaching the desired position or the end
   if (i <= x) {
     // Move iterator forward
@@ -391,11 +390,17 @@ struct Col* playgroundGetColAt(struct Playground* playground, long x) {
       i -= col->type == COL_PADDING ? col->size : 1;
     }
     if (i < x) {
-      // Ran past the x col, col->next must be of type padding (with size > 1)
+      // TODO: Security check. To be removed in production.
+      if (col->type != COL_PADDING) {
+        printf("This should not have happened.\n");
+        exit(1);
+      }
+      
+      // Ran past the x col, col must be of type padding (with size > 1).
       // Move iterator behind that padding col resulting in the same situation
-      // as when moving the iterator forward
-      i += col->next->size + 1;
-      col = col->next->next;
+      // as when moving the iterator forward.
+      i += col->size;
+      col = col->next;
     }
   }
 
@@ -447,6 +452,7 @@ struct Col* playgroundGetColAt(struct Playground* playground, long x) {
     }
   }
 
+  // Update iterator
   playground->currentCol = col;
   playground->currentX = x;
   return col;
