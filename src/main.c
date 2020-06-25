@@ -109,6 +109,7 @@ struct Playground {
 struct Playground* createPlayground(void);
 void freePlayground(struct Playground* playground);
 struct Col* createCol(void);
+struct Col* resizeCol(struct Playground* playground, struct Col* col, unsigned long size);
 struct Col* createPaddingCol(unsigned long size);
 struct Col* playgroundGetColAt(struct Playground* playground, long x);
 void playgroundPlacePiece(struct Playground* playground, long x, piece p);
@@ -268,6 +269,47 @@ struct Col* createCol() {
   col->next = NULL;
   col->prev = NULL;
   return col;
+}
+
+/**
+ * Resize a col node to the given size.
+ * @param playground Pointer to playground the col is situated in.
+ * Needed to update the playground pointers to the resized col pointer.
+ * @param col Pointer to col to be resized
+ * @param size Size the col should be resized to
+ * @return Pointer to resized col node
+ */
+struct Col* resizeCol(struct Playground* playground, struct Col* col, unsigned long size) {
+  struct Col* resizedCol = (struct Col*)
+    realloc(col, sizeof(struct Col) + sizeof(piece) * size);
+  if (!resizedCol) {
+    handleOutOfMemory("resizing column size");
+  }
+  
+  // Update size and state
+  if (resizedCol->changeY == resizedCol->size) {
+    resizedCol->changeY = size;
+  }
+  resizedCol->size = size;
+  
+  // Update pointers
+  if (resizedCol->next) {
+    resizedCol->next->prev = resizedCol;
+  } else {
+    playground->endCol = resizedCol;
+  }
+  if (resizedCol->prev) {
+    resizedCol->prev->next = resizedCol;
+  } else {
+    playground->startCol = resizedCol;
+  }
+  if (col == playground->originCol) {
+    playground->originCol = resizedCol;
+  }
+  if (col == playground->currentCol) {
+    playground->currentCol = resizedCol;
+  }
+  return resizedCol;
 }
 
 /**
@@ -467,47 +509,17 @@ struct Col* playgroundGetColAt(struct Playground* playground, long x) {
 void playgroundPlacePiece(struct Playground* playground, long x, piece p) {
   struct Col* col = playgroundGetColAt(playground, x);
 
+  // Dynamically increase col size if necessary
   if (col->count == col->size) {
-    // Double the column size by reallocating memory
-    unsigned long size = col->size * 2;
-    struct Col* expandedCol = (struct Col*)
-      realloc(col, sizeof(struct Col) + sizeof(piece) * size);
-    if (!expandedCol) {
-      handleOutOfMemory("expanding column size");
-    }
-    
-    // Update size and state
-    if (expandedCol->changeY == expandedCol->size) {
-      expandedCol->changeY = size;
-    }
-    expandedCol->size = size;
-    
-    // Update pointers
-    if (expandedCol->next) {
-      expandedCol->next->prev = expandedCol;
-    } else {
-      playground->endCol = expandedCol;
-    }
-    if (expandedCol->prev) {
-      expandedCol->prev->next = expandedCol;
-    } else {
-      playground->startCol = expandedCol;
-    }
-    if (col == playground->originCol) {
-      playground->originCol = expandedCol;
-    }
-    if (col == playground->currentCol) {
-      playground->currentCol = expandedCol;
-    }
-    col = expandedCol;
+    col = resizeCol(playground, col, col->size * 2);
   }
 
-  // Append piece to the top
+  // Append piece to the top of the col stack
   col->pieces[col->count] = p;
   playgroundTrackChange(playground, col, col->count);
   col->count++;
 
-  // Scan for lines, cause gravity and remove the process until no more
+  // Scan for lines, cause gravity and repeat the process until no more
   // lines are being identified
   playgroundRemoveLines(playground);
   while (playground->pieceRemovalsCount > 0) {
@@ -687,16 +699,16 @@ void playgroundTrackChange(struct Playground* playground, struct Col* col, unsig
 }
 
 /**
- * Let pieces fall down onto pieces marked as being empty.
- * Remove empty pieces from col count.
- * @param playground Playground
+ * Consumes the playground piece removals and lets pieces stacked above those
+ * to be removed fall down. Updates the col count accordingly.
+ * @param playground Playground instance
  */
 void playgroundCauseGravity(struct Playground* playground) {
   unsigned long i;
   struct Col* col;
   struct PieceRemoval* pieceRemoval;
   
-  // Remove pieces
+  // Iterate through removals and mark pieces as empty in the playground
   for (i = 0; i < playground->pieceRemovalsCount; i++) {
     pieceRemoval = playground->pieceRemovals[i];
     pieceRemoval->col->pieces[pieceRemoval->y] = PIECE_EMPTY;
@@ -705,7 +717,7 @@ void playgroundCauseGravity(struct Playground* playground) {
   // Clear piece removals array
   playground->pieceRemovalsCount = 0;
   
-  // Only consider cols where changes were applied
+  // Iterate through cols where changes were applied
   for (i = 0; i < playground->changedColsCount; i++) {
     col = playground->changedCols[i];
 
