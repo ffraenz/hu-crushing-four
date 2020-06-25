@@ -148,14 +148,80 @@ int main(int argc, char *argv[]) {
     freopen(argv[1], "r", stdin);
   }
 
-  // Read placements from stdin
-  // TODO: Use getline(3) instead
-  long x = 0;
+  // Expected line format: ^[0-9]+ +-?[0-9]+$
+  // Current line reading stage
+  // -1 - Unexpected input
+  //  0 - Reading piece in [0; 255]
+  //  1 - Reading spaces and optional -
+  //  2 - Reading positive x value in [0; +2^21]
+  //  3 - Reading negative x value in [-2^21; 0]
+  //  4 - No lines read
+  short readingStage = 4;
+  
+  // Value currently being read
+  long argValue = 0;
+  
+  // Read first line
+  char *line = NULL;
+  size_t lineSize = 32;
+  long lineLength = getline(&line, &lineSize, stdin);
+  
+  short i;
   piece p = 0;
-
-  // Place each piece on the playground
-  // "<color> <x>" color in [0; 254]; x in [-2^21; +2^21]
-  while (fscanf(stdin, "%hu%ld", &p, &x) == 2) {
+  long x = 0;
+  
+  // Iterate through lines
+  while (lineLength > 0) {
+    readingStage = 0;
+    argValue = 0;
+    i = -1;
+    
+    if (debug) {
+      printf("Reading line %s\n", line);
+    }
+    
+    // Iterate through line characters
+    while (++i < lineLength && readingStage != -1) {
+      unsigned char c = line[i];
+      if (c >= '0' && c <= '9') {
+        // Read decimal digit
+        if (readingStage == 1) {
+          // Move to positive x reading stage
+          readingStage = 2;
+        }
+        // Shift in decimal digit
+        argValue = argValue * 10 + (c - '0');
+      } else if (readingStage < 2 && c == ' ') {
+        // Move to spaces stage
+        readingStage = 1;
+         
+        if (argValue < PIECE_EMPTY) {
+          p = argValue;
+          argValue = 0;
+        } else {
+          // Unexpected piece value
+          readingStage = -1;
+        }
+      } else if (readingStage == 1 && c == '-') {
+        // Move to negative x reading stage
+        readingStage = 3;
+      } else if (c == '\n') {
+        // Ignore newline characters
+      } else {
+        // Unexpected character
+        readingStage = -1;
+      }
+    }
+    
+    if (readingStage < 2) {
+      // Unexpected character
+      break;
+    }
+    
+    // Set x position
+    x = readingStage == 2 ? argValue : -argValue;
+    
+    // Place piece p at x
     if (debug) {
       printf("Place piece %3hd at %ld\n", p, x);
     }
@@ -165,6 +231,16 @@ int main(int argc, char *argv[]) {
     if (debug) {
       playgroundPrint(playground);
     }
+    
+    // Read next line
+    lineLength = getline(&line, &lineSize, stdin);
+  }
+  
+  // Handle unexpected input
+  if (readingStage < 2) {
+    printf("Unexpected input\n");
+    freePlayground(playground);
+    exit(1);
   }
 
   // Print playground to stout
