@@ -242,7 +242,7 @@ int main(int argc, char *argv[]) {
   
   // Handle unexpected input
   if (readingStage < 2) {
-    printf("Unexpected input\n");
+    fprintf(stderr, "Unexpected input.\n");
     freePlayground(playground);
     exit(1);
   }
@@ -256,11 +256,11 @@ int main(int argc, char *argv[]) {
 }
 
 /**
- * Handles the event of running out of memory.
+ * Handle the event of running out of memory.
  * @param description Task at which the program ran out of memory
  */
 void handleOutOfMemory(char description[]) {
-  printf("Not enough memory left %s\n", description);
+  fprintf(stderr, "Not enough memory left to %s.\n", description);
   freePlayground(playground);
   playground = NULL;
   exit(1);
@@ -277,7 +277,7 @@ struct Playground* createPlayground() {
   struct Playground* playground = (struct Playground*) malloc(
     sizeof(struct Playground));
   if (!playground) {
-    handleOutOfMemory("creating a playground");
+    handleOutOfMemory("create a playground");
   }
 
   struct Col* col = createCol();
@@ -294,7 +294,7 @@ struct Playground* createPlayground() {
   playground->changedCols = (struct Col**)
     malloc(playground->changedColsSize * sizeof(struct Col*));
   if (!playground->changedCols) {
-    handleOutOfMemory("creating a playground");
+    handleOutOfMemory("create a playground");
   }
   
   playground->pieceRemovalsSize = INITIAL_REMOVAL_SIZE;
@@ -302,7 +302,7 @@ struct Playground* createPlayground() {
   playground->pieceRemovals = (struct PieceRemoval*)
     malloc(playground->pieceRemovalsSize * sizeof(struct PieceRemoval));
   if (!playground->pieceRemovals) {
-    handleOutOfMemory("creating a playground");
+    handleOutOfMemory("create a playground");
   }
   
   return playground;
@@ -340,7 +340,7 @@ struct Col* createCol() {
   struct Col* col = (struct Col*)
     malloc(sizeof(struct Col) + sizeof(piece) * MIN_COL_SIZE);
   if (!col) {
-    handleOutOfMemory("creating a column with size %lu");
+    handleOutOfMemory("create a column");
   }
   col->type = COL_PIECES;
   col->size = MIN_COL_SIZE;
@@ -363,7 +363,7 @@ struct Col* resizeCol(struct Playground* playground, struct Col* col, unsigned l
   struct Col* resizedCol = (struct Col*)
     realloc(col, sizeof(struct Col) + sizeof(piece) * size);
   if (!resizedCol) {
-    handleOutOfMemory("resizing column size");
+    handleOutOfMemory("resize a column");
   }
   
   // Update size and state
@@ -400,7 +400,7 @@ struct Col* resizeCol(struct Playground* playground, struct Col* col, unsigned l
 struct Col* createPaddingCol(unsigned long size) {
   struct Col* col = (struct Col*) malloc(sizeof(struct Col));
   if (!col) {
-    handleOutOfMemory("creating a padding column");
+    handleOutOfMemory("create a padding column");
   }
   col->type = COL_PADDING;
   col->size = size;
@@ -497,7 +497,7 @@ struct Col* playgroundGetColAt(struct Playground* playground, long x) {
     if (i < x) {
       // TODO: Security check. To be removed in production.
       if (col->type != COL_PADDING) {
-        printf("This should not have happened.\n");
+        fprintf(stderr, "This should not have happened.\n");
         exit(1);
       }
       
@@ -735,7 +735,7 @@ void playgroundRemoveLines(struct Playground* playground) {
 void playgroundRemovePiece(struct Playground* playground, struct Col* col, unsigned long y) {
   if (playground->pieceRemovalsCount == playground->changedColsSize) {
     // TODO: Expand dynamic array if necessary
-    printf("Piece removall array needs resizing\n");
+    fprintf(stderr, "Piece removal array needs resizing.\n");
     exit(1);
   }
   struct PieceRemoval *pieceRemoval = &playground->pieceRemovals[playground->pieceRemovalsCount++];
