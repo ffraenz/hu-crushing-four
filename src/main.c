@@ -13,10 +13,10 @@
 #define MIN_COL_SIZE 8
 
 // Initial playground changes array size
-#define INITIAL_CHANGES_SIZE 80
+#define INITIAL_CHANGES_SIZE 8
 
 // Initial piece removal array size
-#define INITIAL_REMOVAL_SIZE 80
+#define INITIAL_REMOVAL_SIZE 16
 
 // Empty piece value
 #define PIECE_EMPTY 255
@@ -733,12 +733,16 @@ void playgroundRemoveLines(struct Playground* playground) {
  * @param y Y-position of piece to be removed
  */
 void playgroundRemovePiece(struct Playground* playground, struct Col* col, unsigned long y) {
-  if (playground->pieceRemovalsCount == playground->changedColsSize) {
-    // TODO: Expand dynamic array if necessary
-    fprintf(stderr, "Piece removal array needs resizing.\n");
-    exit(1);
+  if (playground->pieceRemovalsCount == playground->pieceRemovalsSize) {
+    // Dynamically increase piece removal array size
+    playground->pieceRemovalsSize *= 2;
+    playground->pieceRemovals = (struct PieceRemoval*) realloc(
+      playground->pieceRemovals,
+      playground->pieceRemovalsSize * sizeof(struct PieceRemoval)
+    );
   }
-  struct PieceRemoval *pieceRemoval = &playground->pieceRemovals[playground->pieceRemovalsCount++];
+  struct PieceRemoval *pieceRemoval =
+    &playground->pieceRemovals[playground->pieceRemovalsCount++];
   pieceRemoval->col = col;
   pieceRemoval->y = y;
   playgroundTrackChange(playground, col, y);
@@ -755,8 +759,15 @@ void playgroundTrackChange(struct Playground* playground, struct Col* col, unsig
   if (col->changeY == col->size || col->changeY > y) {
     col->changeY = y;
 
-    // TODO: Dynamically increase change array size if necessary
     if (col->changeY != col->size) {
+      if (playground->changedColsCount == playground->changedColsSize) {
+        // Dynamically increase change array size
+        playground->changedColsSize *= 2;
+        playground->changedCols = (struct Col**) realloc(
+          playground->changedCols,
+          playground->changedColsSize * sizeof(struct Col*)
+        );
+      }
       playground->changedCols[playground->changedColsCount++] = col;
     }
   }
