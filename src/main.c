@@ -1,4 +1,5 @@
 
+#define _GNU_SOURCE
 #include <stdlib.h>
 #include <stdio.h>
 #include <stdbool.h>
@@ -97,7 +98,7 @@ struct Playground {
   unsigned long changedColsSize;
   
   // Removals
-  struct PieceRemoval** pieceRemovals;
+  struct PieceRemoval* pieceRemovals;
   unsigned long pieceRemovalsCount;
   unsigned long pieceRemovalsSize;
 };
@@ -177,7 +178,7 @@ int main(int argc, char *argv[]) {
     i = -1;
     
     if (debug) {
-      printf("Reading line %s\n", line);
+      // printf("Reading line %s\n", line);
     }
     
     // Iterate through line characters
@@ -223,18 +224,21 @@ int main(int argc, char *argv[]) {
     
     // Place piece p at x
     if (debug) {
-      printf("Place piece %3hd at %ld\n", p, x);
+      // printf("Place piece %3hd at %ld\n", p, x);
     }
     
     playgroundPlacePiece(playground, x, p);
     
     if (debug) {
-      playgroundPrint(playground);
+      // playgroundPrint(playground);
     }
     
     // Read next line
     lineLength = getline(&line, &lineSize, stdin);
   }
+  
+  // Free line
+  free(line);
   
   // Handle unexpected input
   if (readingStage < 2) {
@@ -295,8 +299,8 @@ struct Playground* createPlayground() {
   
   playground->pieceRemovalsSize = INITIAL_REMOVAL_SIZE;
   playground->pieceRemovalsCount = 0;
-  playground->pieceRemovals = (struct PieceRemoval**)
-    malloc(playground->pieceRemovalsSize * sizeof(struct PieceRemoval*));
+  playground->pieceRemovals = (struct PieceRemoval*)
+    malloc(playground->pieceRemovalsSize * sizeof(struct PieceRemoval));
   if (!playground->pieceRemovals) {
     handleOutOfMemory("creating a playground");
   }
@@ -403,23 +407,6 @@ struct Col* createPaddingCol(unsigned long size) {
   col->next = NULL;
   col->prev = NULL;
   return col;
-}
-
-/**
- * Create a piece removal for the given column and y-position.
- * @param col Pointer to col
- * @param y Piece y-position
- * @return Pointer to new piece removal
- */
-struct PieceRemoval* createPieceRemoval(struct Col* col, unsigned long y) {
-  struct PieceRemoval* pieceRemoval = (struct PieceRemoval*)
-    malloc(sizeof(struct PieceRemoval));
-  if (!pieceRemoval) {
-    handleOutOfMemory("creating a piece removal");
-  }
-  pieceRemoval->col = col;
-  pieceRemoval->y = y;
-  return pieceRemoval;
 }
 
 /**
@@ -751,8 +738,9 @@ void playgroundRemovePiece(struct Playground* playground, struct Col* col, unsig
     printf("Piece removall array needs resizing\n");
     exit(1);
   }
-  
-  playground->pieceRemovals[playground->pieceRemovalsCount++] = createPieceRemoval(col, y);
+  struct PieceRemoval *pieceRemoval = &playground->pieceRemovals[playground->pieceRemovalsCount++];
+  pieceRemoval->col = col;
+  pieceRemoval->y = y;
   playgroundTrackChange(playground, col, y);
 }
 
@@ -786,7 +774,7 @@ void playgroundCauseGravity(struct Playground* playground) {
   
   // Iterate through removals and mark pieces as empty in the playground
   for (i = 0; i < playground->pieceRemovalsCount; i++) {
-    pieceRemoval = playground->pieceRemovals[i];
+    pieceRemoval = &playground->pieceRemovals[i];
     pieceRemoval->col->pieces[pieceRemoval->y] = PIECE_EMPTY;
   }
   
