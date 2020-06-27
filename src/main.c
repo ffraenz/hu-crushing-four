@@ -10,7 +10,7 @@
 // *****************
 
 // Initial and minimum column array size
-#define MIN_COL_SIZE 8
+#define MIN_COL_SIZE 4
 
 // Initial playground changes array size
 #define INITIAL_CHANGES_SIZE 8
@@ -23,6 +23,9 @@
 
 // Min number of pieces required to form a line
 #define MIN_LINE_COUNT 4
+
+// Maximum absolute x value (1 digit more may not be able to fit into long)
+#define MAX_X 999999999
 
 // ********************
 // *   HEADER TYPES   *
@@ -145,7 +148,7 @@ int main(int argc, char *argv[]) {
   // Create empty playground
   playground = createPlayground();
   
-  // Debug mode: Run specific test case if first argument is set
+  // Debug mode: Run specific test case in debug mode if first argument is set
   if (argc == 2) {
     debug = true;
     freopen(argv[1], "r", stdin);
@@ -179,10 +182,6 @@ int main(int argc, char *argv[]) {
     argValue = 0;
     i = -1;
     
-    if (debug) {
-      // printf("Reading line %s\n", line);
-    }
-    
     // Iterate through line characters
     while (++i < lineLength && readingStage != -1) {
       unsigned char c = line[i];
@@ -194,6 +193,10 @@ int main(int argc, char *argv[]) {
         }
         // Shift in decimal digit
         argValue = argValue * 10 + (c - '0');
+        // Verify value bounds
+        if (argValue > MAX_X) {
+          readingStage = -1;
+        }
       } else if (readingStage < 2 && c == ' ') {
         // Move to spaces stage
         readingStage = 1;
@@ -225,14 +228,10 @@ int main(int argc, char *argv[]) {
     x = readingStage == 2 ? argValue : -argValue;
     
     // Place piece p at x
-    if (debug) {
-      // printf("Place piece %3hd at %ld\n", p, x);
-    }
-    
     playgroundPlacePiece(playground, x, p);
     
     if (debug) {
-      // playgroundPrint(playground);
+      playgroundPrint(playground);
     }
     
     // Read next line
@@ -244,7 +243,7 @@ int main(int argc, char *argv[]) {
   
   // Handle unexpected input
   if (readingStage < 2) {
-    fprintf(stderr, "Unexpected input.\n");
+    fprintf(stderr, "Unexpected input. Expected line format: ^[0-9]+ +-?[0-9]+$\n");
     freePlayground(playground);
     exit(1);
   }
@@ -552,12 +551,6 @@ struct Col* playgroundGetCol(struct Playground* playground, long x) {
       i -= col->type == COL_PADDING ? col->size : 1;
     }
     if (i < x) {
-      // TODO: Security check. To be removed in production.
-      if (col->type != COL_PADDING) {
-        fprintf(stderr, "This should not have happened.\n");
-        exit(1);
-      }
-      
       // Ran past the x col, col must be of type padding (with size > 1).
       // Move iterator behind that padding col resulting in the same situation
       // as when moving the iterator forward.
@@ -735,7 +728,7 @@ void playgroundRemoveCol(struct Playground* playground, struct Col* col) {
  * @param playground Playground
  */
 void playgroundRemoveLines(struct Playground* playground) {
-  int j;
+  unsigned long j;
   long y;
   long nextY;
   unsigned long lineLength;
@@ -750,14 +743,16 @@ void playgroundRemoveLines(struct Playground* playground) {
   struct Col* lineStartCol;
 
   // Only consider cols where changes were applied
-  for (int i = 0; i < playground->changedColsCount; i++) {
+  for (unsigned long i = 0; i < playground->changedColsCount; i++) {
     col = playground->changedCols[i];
 
     // For each y above changeY identify crossing horizontal and diagonal lines
     for (y = col->changeY; y < col->count; y++) {
       currentPiece = col->pieces[y];
-      // TODO: Optimize: No need to search from pieces that are marked as removed
-
+      
+      // TODO: No need to search from pieces that are marked as removed
+      // Problem: The current data structure does not allow this in O(1)
+      
       // Iterate through directions falling diagonal (-1), horizontal (0) and
       // climbing diagonal (1)
       for (delY = -1; delY <= 1; delY++) {
@@ -949,43 +944,48 @@ void playgroundCauseGravity(struct Playground* playground) {
  * @param playground Pointer to playground struct to be printed
  */
 void playgroundPrint(struct Playground* playground) {
-  // Iterate from the start col
   struct Col* col = playground->startCol;
   long x = playground->startColX;
-
-  if (debug) {
-    printf("Playground: [%ld; %ld]", playground->startColX, playground->endColX);
-  }
-
-  while (col) {
-    if (col->type == COL_PIECES) {
-      if (debug) {
-        printf("\n[%8ld] col %2lu/%2lu |", x, col->count, col->size);
-      }
-
-      // Print column pieces
-      for (long unsigned j = 0; j < col->count; j++) {
-        if (debug) {
-          printf("%3hu|", col->pieces[j]);
-        } else {
+  
+  if (!debug) {
+    while (col) {
+      if (col->type == COL_PIECES) {
+        // Print column pieces
+        for (long unsigned j = 0; j < col->count; j++) {
           printf("%d %ld %lu\n", col->pieces[j], x, j);
         }
+        // Iterate to the next col
+        x++;
+        col = col->next;
+      } else {
+        // Iterate to the next col
+        x = x + col->size;
+        col = col->next;
       }
-      // Iterate to the next col
-      x++;
-      col = col->next;
-    } else {
-      if (debug) {
-        printf("\n[%8ld] --- %lu cols ---", x, col->size);
-      }
-
-      // Iterate to the next col
-      x = x + col->size;
-      col = col->next;
     }
-  }
+  } else {
+    printf("Playground: [%ld; %ld]", playground->startColX, playground->endColX);
+    
+    while (col) {
+      if (col->type == COL_PIECES) {
+        printf("\n[%8ld] col %2lu/%2lu |", x, col->count, col->size);
 
-  if (debug) {
+        // Print column pieces
+        for (long unsigned j = 0; j < col->count; j++) {
+          printf("%3hu|", col->pieces[j]);
+        }
+        // Iterate to the next col
+        x++;
+        col = col->next;
+      } else {
+        printf("\n[%8ld] --- %lu cols ---", x, col->size);
+
+        // Iterate to the next col
+        x = x + col->size;
+        col = col->next;
+      }
+    }
+    
     printf("\n\n");
   }
 }

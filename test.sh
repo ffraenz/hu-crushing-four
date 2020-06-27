@@ -13,7 +13,7 @@ do
   CASE_STDOUT_PATH="${CASE_STDIN_PATH%.*}.stdout"
 
   # Run test
-  cat $CASE_STDIN_PATH | ./loesung | sort > $TEST_STDOUT
+  cat $CASE_STDIN_PATH | time ./loesung | sort > $TEST_STDOUT
 
   # Diff result
   CASE_DIFF=$(diff <(sort $CASE_STDOUT_PATH) $TEST_STDOUT)
