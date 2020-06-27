@@ -15,9 +15,6 @@
 // Initial playground changes array size
 #define INITIAL_CHANGES_SIZE 8
 
-// Initial piece removal array size
-#define INITIAL_REMOVAL_SIZE 16
-
 // Empty piece value
 #define PIECE_EMPTY 255
 
@@ -32,7 +29,7 @@
 // ********************
 
 // Value range: [0, 254], 255 = cleared
-typedef unsigned short piece;
+typedef unsigned char piece;
 
 // Col types
 typedef enum { COL_PIECES, COL_PADDING } colType;
@@ -60,17 +57,8 @@ struct Col {
   // Pointer to previous col
   struct Col* prev;
 
-  // Column pieces
+  // Column pieces and removal bits
   piece pieces[];
-};
-
-// Data structure describing a single piece removal from a referenced column
-struct PieceRemoval {
-  // Pointer to the col a piece should be removed from
-  struct Col *col;
-  
-  // Piece Y-position inside the reference col
-  unsigned long y;
 };
 
 // Playground data structure (doubly linked list of cols)
@@ -100,11 +88,6 @@ struct Playground {
   struct Col** changedCols;
   unsigned long changedColsCount;
   unsigned long changedColsSize;
-  
-  // Removals
-  struct PieceRemoval* pieceRemovals;
-  unsigned long pieceRemovalsCount;
-  unsigned long pieceRemovalsSize;
 };
 
 // ************************
@@ -115,12 +98,14 @@ struct Playground* createPlayground(void);
 void freePlayground(struct Playground* playground);
 struct Col* createCol(void);
 struct Col* resizeCol(struct Playground* playground, struct Col* col, unsigned long size);
+void colClearPieceRemovals(struct Col* col, unsigned long changeY);
+bool colGetPieceRemoval(struct Col* col, unsigned long y);
+void colSetPieceRemoval(struct Col* col, unsigned long y);
 struct Col* createPaddingCol(unsigned long size);
 struct Col* playgroundGetCol(struct Playground* playground, long x);
 void playgroundRemoveCol(struct Playground* playground, struct Col* col);
 void playgroundPlacePiece(struct Playground* playground, long x, piece p);
-void playgroundRemoveLines(struct Playground* playground);
-void playgroundRemovePiece(struct Playground* playground, struct Col* col, unsigned long y);
+bool playgroundIdentifyLines(struct Playground* playground);
 void playgroundTrackChange(struct Playground* playground, struct Col* col, unsigned long y);
 void playgroundCauseGravity(struct Playground* playground);
 void playgroundPrint(struct Playground* playground);
@@ -145,14 +130,14 @@ struct Playground* playground;
  * @return Exit code
  */
 int main(int argc, char *argv[]) {
-  // Create empty playground
-  playground = createPlayground();
-  
   // Debug mode: Run specific test case in debug mode if first argument is set
   if (argc == 2) {
     debug = true;
     freopen(argv[1], "r", stdin);
   }
+  
+  // Create empty playground
+  playground = createPlayground();
 
   // Expected line format: ^[0-9]+ +-?[0-9]+$
   // Current line reading stage
@@ -226,12 +211,14 @@ int main(int argc, char *argv[]) {
     
     // Set x position
     x = readingStage == 2 ? argValue : -argValue;
-    
+
     // Place piece p at x
-    playgroundPlacePiece(playground, x, p);
-    
-    if (debug) {
-      playgroundPrint(playground);
+    if (!debug) {
+      playgroundPlacePiece(playground, x, p);
+    } else {
+      printf("Placing piece %hd at %ld\n", p, x);
+      playgroundPlacePiece(playground, x, p);
+      // playgroundPrint(playground);
     }
     
     // Read next line
@@ -298,14 +285,6 @@ struct Playground* createPlayground() {
     handleOutOfMemory("create a playground");
   }
   
-  playground->pieceRemovalsSize = INITIAL_REMOVAL_SIZE;
-  playground->pieceRemovalsCount = 0;
-  playground->pieceRemovals = (struct PieceRemoval*)
-    malloc(playground->pieceRemovalsSize * sizeof(struct PieceRemoval));
-  if (!playground->pieceRemovals) {
-    handleOutOfMemory("create a playground");
-  }
-  
   return playground;
 }
 
@@ -326,7 +305,6 @@ void freePlayground(struct Playground* playground) {
     
     // Free piece removal and change arrays
     free(playground->changedCols);
-    free(playground->pieceRemovals);
 
     // Free playground itself
     free(playground);
@@ -334,12 +312,12 @@ void freePlayground(struct Playground* playground) {
 }
 
 /**
- * Create a col node with the default initial size.
+ * Create a piece col with the default initial size.
  * @return Pointer to new col node
  */
 struct Col* createCol() {
   struct Col* col = (struct Col*)
-    malloc(sizeof(struct Col) + sizeof(piece) * MIN_COL_SIZE);
+    malloc(sizeof(struct Col) + sizeof(piece) * (MIN_COL_SIZE + 1));
   if (!col) {
     handleOutOfMemory("create a column");
   }
@@ -349,11 +327,12 @@ struct Col* createCol() {
   col->changeY = MIN_COL_SIZE;
   col->next = NULL;
   col->prev = NULL;
+  colClearPieceRemovals(col, 0);
   return col;
 }
 
 /**
- * Resize a col node to the given size.
+ * Resize a piece col node to the given size.
  * @param playground Pointer to playground the col is situated in.
  * Needed to update the playground pointers to the resized col pointer.
  * @param col Pointer to col to be resized
@@ -369,11 +348,13 @@ struct Col* resizeCol(struct Playground* playground, struct Col* col, unsigned l
     return col;
   }
   
+  // Re-allocate size for size pieces and size removal bits
   struct Col* resizedCol = (struct Col*)
-    realloc(col, sizeof(struct Col) + sizeof(piece) * size);
+    realloc(col, sizeof(struct Col) + sizeof(piece) * (size + (size + 7) / 8));
   if (!resizedCol) {
     handleOutOfMemory("resize a column");
   }
+  colClearPieceRemovals(resizedCol, 0);
   
   // Update size and state
   if (resizedCol->changeY == resizedCol->size) {
@@ -398,7 +379,74 @@ struct Col* resizeCol(struct Playground* playground, struct Col* col, unsigned l
   if (col == playground->currentCol) {
     playground->currentCol = resizedCol;
   }
+  
   return resizedCol;
+}
+
+/**
+ * Clear piece removals above the given Y-position.
+ * Needs to run upon allocation and reallocation to ensure bits to be 0ed.
+ * @param col Col instance that piece removals should be cleared in
+ * @param changeY Y-position above which piece removals should be cleared
+ */
+void colClearPieceRemovals(struct Col* col, unsigned long changeY) {
+  if (debug) {
+    printf("colClearPieceRemovals col->pieces[%ld] clear %ld bytes\n",
+      col->size + (changeY >> 3),
+      (col->size + 7) / 8 - (changeY >> 3)
+    );
+  }
+  
+  if (col->size + (changeY >> 3) + (col->size + 7) / 8 - (changeY >> 3) > col->size + (col->size + 7) / 8) {
+    printf("Aua!\n");
+    exit(1);
+  }
+  
+  memset(
+    &col->pieces[col->size + (changeY >> 3)], 0,
+    (col->size + 7) / 8 - (changeY >> 3)
+  );
+}
+
+/**
+ * Returns wether the given piece Y-position is to be removed.
+ * @param col Col instance the piece is loacted in
+ * @param y Y-position of the piece to be checked
+ */
+bool colGetPieceRemoval(struct Col* col, unsigned long y) {
+  if (debug) {
+    printf("colGetPieceRemoval col->pieces[%ld]: %hd & %d = %d\n",
+      col->size + (y >> 3),
+      col->pieces[col->size + (y >> 3)],
+      1 << (y & 7),
+      (col->pieces[col->size + (y >> 3)] & (1 << (y & 7))) != 0
+    );
+  }
+  if (col->size + (y >> 3) >= col->size + (col->size + 7) / 8) {
+    printf("Aua!\n");
+    exit(1);
+  }
+  return (col->pieces[col->size + (y >> 3)] & (1 << (y & 7))) != 0;
+}
+
+/**
+ * Set piece at the given Y-position as to be removed.
+ * @param col Col instance the piece is located in
+ * @param y Y-position of the piece to be set removed
+ */
+void colSetPieceRemoval(struct Col* col, unsigned long y) {
+  if (debug) {
+    printf("colSetPieceRemoval col->pieces[%ld]: %hd | %d\n",
+      col->size + (y >> 3),
+      col->pieces[col->size + (y >> 3)],
+      1 << (y & 7)
+    );
+  }
+  if (col->size + (y >> 3) >= col->size + (col->size + 7) / 8) {
+    printf("Aua!\n");
+    exit(1);
+  }
+  col->pieces[col->size + (y >> 3)] |= 1 << (y & 7);
 }
 
 /**
@@ -439,10 +487,8 @@ void playgroundPlacePiece(struct Playground* playground, long x, piece p) {
 
   // Scan for lines, remove them, cause gravity and repeat the process until no
   // more lines are being identified
-  playgroundRemoveLines(playground);
-  while (playground->pieceRemovalsCount > 0) {
+  while (playgroundIdentifyLines(playground)) {
     playgroundCauseGravity(playground);
-    playgroundRemoveLines(playground);
   }
 
   // Reset change state and memory optimization (col shrinking and removal)
@@ -724,10 +770,13 @@ void playgroundRemoveCol(struct Playground* playground, struct Col* col) {
 
 /**
  * Identify horizontal (–), vertical (|), diagonal (/, \) lines and mark pieces
- * on those lines as empty while tracking changes.
+ * on those lines as removed while tracking changes.
  * @param playground Playground
+ * @return True, if at least one line got identified
  */
-void playgroundRemoveLines(struct Playground* playground) {
+bool playgroundIdentifyLines(struct Playground* playground) {
+  bool lineIdentified = false;
+  
   unsigned long j;
   long y;
   long nextY;
@@ -808,11 +857,13 @@ void playgroundRemoveLines(struct Playground* playground) {
 
         if (lineLength >= MIN_LINE_COUNT) {
           // We identified a horizontal or diagonal line (based on nextY)
+          lineIdentified = true;
           // Iterate over line cols and remove each piece
           nextY += delY;
           nextCol = lineStartCol;
           while (nextCol && nextCol->prev != lineEndCol) {
-            playgroundRemovePiece(playground, nextCol, nextY);
+            colSetPieceRemoval(nextCol, nextY);
+            playgroundTrackChange(playground, nextCol, nextY);
             nextCol = nextCol->next;
             nextY += delY;
           }
@@ -831,12 +882,15 @@ void playgroundRemoveLines(struct Playground* playground) {
         lineLength++;
         if (lineLength == MIN_LINE_COUNT) {
           // Min line count fulfilled, remove pieces
+          lineIdentified = true;
+          playgroundTrackChange(playground, col, y);
           for (j = 0; j < MIN_LINE_COUNT; j++) {
-            playgroundRemovePiece(playground, col, y + j);
+            colSetPieceRemoval(col, y + j);
           }
         } else if (lineLength > MIN_LINE_COUNT) {
           // Remove this next line piece
-          playgroundRemovePiece(playground, col, y);
+          colSetPieceRemoval(col, y);
+          playgroundTrackChange(playground, col, y);
         }
       } else if (y >= col->changeY) {
         // Reset line
@@ -848,29 +902,8 @@ void playgroundRemoveLines(struct Playground* playground) {
       }
     }
   }
-}
-
-/**
- * Mark piece at the given Y-position inside a col as to be removed.
- * It will definetly be removed in the gravity step of the loop.
- * @param playground Playground instance
- * @param col Col instance to remove piece from
- * @param y Y-position of piece to be removed
- */
-void playgroundRemovePiece(struct Playground* playground, struct Col* col, unsigned long y) {
-  if (playground->pieceRemovalsCount == playground->pieceRemovalsSize) {
-    // Dynamically increase piece removal array size
-    playground->pieceRemovalsSize *= 2;
-    playground->pieceRemovals = (struct PieceRemoval*) realloc(
-      playground->pieceRemovals,
-      playground->pieceRemovalsSize * sizeof(struct PieceRemoval)
-    );
-  }
-  struct PieceRemoval *pieceRemoval =
-    &playground->pieceRemovals[playground->pieceRemovalsCount++];
-  pieceRemoval->col = col;
-  pieceRemoval->y = y;
-  playgroundTrackChange(playground, col, y);
+  
+  return lineIdentified;
 }
 
 /**
@@ -907,32 +940,24 @@ void playgroundTrackChange(struct Playground* playground, struct Col* col, unsig
  * @param playground Playground instance
  */
 void playgroundCauseGravity(struct Playground* playground) {
-  unsigned long i;
-  struct Col* col;
-  struct PieceRemoval* pieceRemoval;
-  
-  // Iterate through removals and mark pieces as empty in the playground
-  for (i = 0; i < playground->pieceRemovalsCount; i++) {
-    pieceRemoval = &playground->pieceRemovals[i];
-    pieceRemoval->col->pieces[pieceRemoval->y] = PIECE_EMPTY;
-  }
-  
-  // Clear piece removals array
-  playground->pieceRemovalsCount = 0;
-  
   // Iterate through cols where changes were applied
-  for (i = 0; i < playground->changedColsCount; i++) {
+  struct Col* col;
+  unsigned long removedPieces;
+  for (unsigned long i = 0; i < playground->changedColsCount; i++) {
     col = playground->changedCols[i];
 
     // Cause gravity on a single column
-    unsigned long removedPieces = 0;
+    removedPieces = 0;
     for (unsigned long y = col->changeY; y < col->count; y++) {
-      if (col->pieces[y] == PIECE_EMPTY) {
+      if (colGetPieceRemoval(col, y)) {
         removedPieces++;
       } else {
         col->pieces[y - removedPieces] = col->pieces[y];
       }
     }
+    
+    // Clear removal bits above change Y
+    colClearPieceRemovals(col, col->changeY);
 
     // Update col piece count / height
     col->count -= removedPieces;
