@@ -32,7 +32,7 @@
 // ********************
 
 // Value range: [0, 254], 255 = cleared
-typedef unsigned short piece;
+typedef unsigned char piece;
 
 // Col types
 typedef enum { COL_PIECES, COL_PADDING } colType;
