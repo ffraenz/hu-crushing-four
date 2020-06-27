@@ -622,6 +622,8 @@ struct Col* playgroundGetCol(struct Playground* playground, long x) {
 
 /**
  * Remove the given col from the playground.
+ * Maintain the playground positions and pointers (startCol, currentCol, endCol)
+ * that must point to piece cols.
  * @param playground Playground instance
  * @param col Col to be removed. Must not be the origin col.
  */
@@ -636,15 +638,33 @@ void playgroundRemoveCol(struct Playground* playground, struct Col* col) {
       prevCol->next = nextCol->next;
       nextCol->next->prev = prevCol;
       prevCol->size += nextCol->size + 1;
+      
+      if (playground->currentCol == col) {
+        playground->currentCol = prevCol->prev;
+        playground->currentX -= prevCol->size - nextCol->size;
+      }
+      
+      // Free dangling upper padding col
       free(nextCol);
+      
     } else if (prevCol->type == COL_PADDING || nextCol->type == COL_PADDING) {
       // Remove col and expand lower or upper padding
       prevCol->next = nextCol;
       nextCol->prev = prevCol;
       if (prevCol->type == COL_PADDING) {
         prevCol->size++;
+        
+        if (playground->currentCol == col) {
+          playground->currentCol = nextCol;
+          playground->currentX++;
+        }
       } else {
         nextCol->size++;
+        
+        if (playground->currentCol == col) {
+          playground->currentCol = prevCol;
+          playground->currentX--;
+        }
       }
     } else {
       // Col in between other cols, replace piece col by padding col
@@ -653,11 +673,11 @@ void playgroundRemoveCol(struct Playground* playground, struct Col* col) {
       paddingCol->prev = prevCol;
       nextCol->prev = paddingCol;
       paddingCol->next = nextCol;
-    }
-    
-    if (playground->currentCol == col) {
-      playground->currentCol = playground->originCol;
-      playground->currentX = 0;
+      
+      if (playground->currentCol == col) {
+        playground->currentCol = prevCol;
+        playground->currentX--;
+      }
     }
 
     // Free dangling col
