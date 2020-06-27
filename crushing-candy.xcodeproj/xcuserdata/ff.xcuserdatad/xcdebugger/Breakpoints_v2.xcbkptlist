@@ -7,13 +7,23 @@
       <BreakpointProxy
          BreakpointExtensionID = "Xcode.Breakpoint.SymbolicBreakpoint">
          <BreakpointContent
-            uuid = "AEDDFA71-4B4C-4EF4-8477-3ABC20B57B2F"
+            uuid = "88236D85-9EAA-4C0E-8BD0-DCF28963447D"
             shouldBeEnabled = "Yes"
             ignoreCount = "0"
             continueAfterRunningActions = "No"
-            symbolName = ""
+            symbolName = "malloc_error_break"
             moduleName = "">
             <Locations>
+               <Location
+                  uuid = "88236D85-9EAA-4C0E-8BD0-DCF28963447D - 9d096611641b4e7c"
+                  shouldBeEnabled = "Yes"
+                  ignoreCount = "0"
+                  continueAfterRunningActions = "No"
+                  symbolName = "malloc_error_break"
+                  moduleName = "libsystem_malloc.dylib"
+                  usesParentBreakpointCondition = "Yes"
+                  offsetFromSymbolStart = "0">
+               </Location>
             </Locations>
          </BreakpointContent>
       </BreakpointProxy>

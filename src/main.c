@@ -47,7 +47,8 @@ struct Col {
   // Number of pieces that are part of the array
   unsigned long count;
 
-  // Piece index from which changes happend. Equal to size if there is no change
+  // Piece index above which changes were applied.
+  // Equal to the col size if there are no changes.
   unsigned long changeY;
 
   // Pointer to next col
@@ -92,7 +93,7 @@ struct Playground {
   // Position of the iterator col
   long currentX;
 
-  // Array of changed cols
+  // Array of changed cols (no duplicates allowed)
   struct Col** changedCols;
   unsigned long changedColsCount;
   unsigned long changedColsSize;
@@ -112,7 +113,8 @@ void freePlayground(struct Playground* playground);
 struct Col* createCol(void);
 struct Col* resizeCol(struct Playground* playground, struct Col* col, unsigned long size);
 struct Col* createPaddingCol(unsigned long size);
-struct Col* playgroundGetColAt(struct Playground* playground, long x);
+struct Col* playgroundGetCol(struct Playground* playground, long x);
+void playgroundRemoveCol(struct Playground* playground, struct Col* col);
 void playgroundPlacePiece(struct Playground* playground, long x, piece p);
 void playgroundRemoveLines(struct Playground* playground);
 void playgroundRemovePiece(struct Playground* playground, struct Col* col, unsigned long y);
@@ -360,6 +362,14 @@ struct Col* createCol() {
  * @return Pointer to resized col node
  */
 struct Col* resizeCol(struct Playground* playground, struct Col* col, unsigned long size) {
+  if (size < MIN_COL_SIZE) {
+    size = MIN_COL_SIZE;
+  }
+  
+  if (col->size == size) {
+    return col;
+  }
+  
   struct Col* resizedCol = (struct Col*)
     realloc(col, sizeof(struct Col) + sizeof(piece) * size);
   if (!resizedCol) {
@@ -410,17 +420,64 @@ struct Col* createPaddingCol(unsigned long size) {
 }
 
 /**
+ * Insert a piece at the given x-position.
+ * @param playground Playground instance
+ * @param x Position to insert the piece
+ * @param p Piece color to be inserted
+ */
+void playgroundPlacePiece(struct Playground* playground, long x, piece p) {
+  struct Col* col = playgroundGetCol(playground, x);
+
+  // Dynamically increase col size if necessary
+  if (col->count == col->size) {
+    col = resizeCol(playground, col, col->size * 2);
+  }
+
+  // Append piece to the top of the col stack
+  col->pieces[col->count] = p;
+  playgroundTrackChange(playground, col, col->count);
+  col->count++;
+
+  // Scan for lines, remove them, cause gravity and repeat the process until no
+  // more lines are being identified
+  playgroundRemoveLines(playground);
+  while (playground->pieceRemovalsCount > 0) {
+    playgroundCauseGravity(playground);
+    playgroundRemoveLines(playground);
+  }
+
+  // Reset change state and memory optimization (col shrinking and removal)
+  for (unsigned long i = 0; i < playground->changedColsCount; i++) {
+    col = playground->changedCols[i];
+    if (col->count == 0 && col != playground->originCol) {
+      // Found empty column not being at the origin, remove it
+      playgroundRemoveCol(playground, col);
+    } else if (col->size > MIN_COL_SIZE && col->count * 4 < col->size) {
+      // Reset change state and shrink col
+      col->changeY = col->size;
+      col = resizeCol(playground, col, col->size / 4);
+    } else {
+      // Reset change state
+      col->changeY = col->size;
+    }
+  }
+  
+  // Clear changes
+  playground->changedColsCount = 0;
+}
+
+/**
  * Finds the Col at the given x. Lazily creates a col instance if not done, yet.
  * Lazily creates padding cols if necessary, but they are never returned.
+ * Inside this method make sure the linked list stays intact between creation
+ * calls to ensure the list can be freed up, again.
  * @param playground Playground instance
  * @param x Col position
  * @return Pointer to Col struct
  */
-struct Col* playgroundGetColAt(struct Playground* playground, long x) {
+struct Col* playgroundGetCol(struct Playground* playground, long x) {
   struct Col* col;
   
-  // TODO: Make sure col list stays intact between creation calls that may cause out of memory errors
-
   // Test basic search cases (cheap, in O(1))
   if (x == 0) {
     // Origin col requested
@@ -564,39 +621,92 @@ struct Col* playgroundGetColAt(struct Playground* playground, long x) {
 }
 
 /**
- * Insert a piece at the given x-position.
- * @param playground Playground
- * @param x Position to insert the piece
- * @param p Piece color to be inserted
+ * Remove the given col from the playground.
+ * @param playground Playground instance
+ * @param col Col to be removed. Must not be the origin col.
  */
-void playgroundPlacePiece(struct Playground* playground, long x, piece p) {
-  struct Col* col = playgroundGetColAt(playground, x);
+void playgroundRemoveCol(struct Playground* playground, struct Col* col) {
+  struct Col* prevCol = col->prev;
+  struct Col* nextCol = col->next;
+  
+  if (prevCol && nextCol) {
+    // The col has two adjacent cols
+    if (prevCol->type == COL_PADDING && nextCol->type == COL_PADDING) {
+      // Span the lower padding col over the upper padding col
+      prevCol->next = nextCol->next;
+      nextCol->next->prev = prevCol;
+      prevCol->size += nextCol->size + 1;
+      free(nextCol);
+    } else if (prevCol->type == COL_PADDING || nextCol->type == COL_PADDING) {
+      // Remove col and expand lower or upper padding
+      prevCol->next = nextCol;
+      nextCol->prev = prevCol;
+      if (prevCol->type == COL_PADDING) {
+        prevCol->size++;
+      } else {
+        nextCol->size++;
+      }
+    } else {
+      // Col in between other cols, replace piece col by padding col
+      struct Col* paddingCol = createPaddingCol(1);
+      prevCol->next = paddingCol;
+      paddingCol->prev = prevCol;
+      nextCol->prev = paddingCol;
+      paddingCol->next = nextCol;
+    }
+    
+    if (playground->currentCol == col) {
+      playground->currentCol = playground->originCol;
+      playground->currentX = 0;
+    }
 
-  // Dynamically increase col size if necessary
-  if (col->count == col->size) {
-    col = resizeCol(playground, col, col->size * 2);
+    // Free dangling col
+    free(col);
+  } else if (col == playground->startCol) {
+    // The col to be removed is at the lower end
+    // Remove col itself
+    struct Col* startCol = col->next;
+    free(startCol->prev);
+    startCol->prev = NULL;
+    playground->startColX++;
+    
+    // Remove dangling padding col
+    if (startCol->type == COL_PADDING) {
+      playground->startColX += startCol->size;
+      startCol = startCol->next;
+      free(startCol->prev);
+      startCol->prev = NULL;
+    }
+    
+    // Update pointers
+    playground->startCol = startCol;
+    if (playground->currentCol == col) {
+      playground->currentCol = startCol;
+      playground->currentX = playground->startColX;
+    }
+  } else if (col == playground->endCol) {
+    // The col to be removed is at the upper end
+    // Remove col itself
+    struct Col* endCol = col->prev;
+    free(endCol->next);
+    endCol->next = NULL;
+    playground->endColX--;
+    
+    // Remove dangling padding col
+    if (endCol->type == COL_PADDING) {
+      playground->endColX -= endCol->size;
+      endCol = endCol->prev;
+      free(endCol->next);
+      endCol->next = NULL;
+    }
+    
+    // Update pointers
+    playground->endCol = endCol;
+    if (playground->currentCol == col) {
+      playground->currentCol = endCol;
+      playground->currentX = playground->endColX;
+    }
   }
-
-  // Append piece to the top of the col stack
-  col->pieces[col->count] = p;
-  playgroundTrackChange(playground, col, col->count);
-  col->count++;
-
-  // Scan for lines, cause gravity and repeat the process until no more
-  // lines are being identified
-  playgroundRemoveLines(playground);
-  while (playground->pieceRemovalsCount > 0) {
-    playgroundCauseGravity(playground);
-    playgroundRemoveLines(playground);
-  }
-
-  // TODO: Downgrade, free or merge empty cols
-
-  // Clear changes
-  for (int i = 0; i < playground->changedColsCount; i++) {
-    playground->changedCols[i]->changeY = playground->changedCols[i]->size;
-  }
-  playground->changedColsCount = 0;
 }
 
 /**
@@ -755,21 +865,24 @@ void playgroundRemovePiece(struct Playground* playground, struct Col* col, unsig
  * @param y Piece Y-position
  */
 void playgroundTrackChange(struct Playground* playground, struct Col* col, unsigned long y) {
-  // Mark col pieces above y as changed
-  if (col->changeY == col->size || col->changeY > y) {
+  if (col->changeY == col->size) {
+    // Column has not yet been marked as changed in the current iteration
     col->changeY = y;
 
-    if (col->changeY != col->size) {
-      if (playground->changedColsCount == playground->changedColsSize) {
-        // Dynamically increase change array size
-        playground->changedColsSize *= 2;
-        playground->changedCols = (struct Col**) realloc(
-          playground->changedCols,
-          playground->changedColsSize * sizeof(struct Col*)
-        );
-      }
-      playground->changedCols[playground->changedColsCount++] = col;
+    // Dynamically increase change array size, if necessary
+    if (playground->changedColsCount == playground->changedColsSize) {
+      playground->changedColsSize *= 2;
+      playground->changedCols = (struct Col**) realloc(
+        playground->changedCols,
+        playground->changedColsSize * sizeof(struct Col*)
+      );
     }
+    
+    // Append col to changed cols array
+    playground->changedCols[playground->changedColsCount++] = col;
+  } else if (col->changeY > y) {
+    // Update Y-position of the change
+    col->changeY = y;
   }
 }
 
