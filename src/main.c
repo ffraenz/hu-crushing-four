@@ -149,10 +149,12 @@ int main(int argc, char *argv[]) {
   playground = createPlayground();
   
   // Debug mode: Run specific test case in debug mode if first argument is set
+  /*
   if (argc == 2) {
     debug = true;
     freopen(argv[1], "r", stdin);
   }
+  */
 
   // Expected line format: ^[0-9]+ +-?[0-9]+$
   // Current line reading stage
@@ -162,7 +164,7 @@ int main(int argc, char *argv[]) {
   //  2 - Reading positive x value in [0; +2^21]
   //  3 - Reading negative x value in [-2^21; 0]
   //  4 - No lines read
-  short readingStage = 4;
+  int readingStage = 4;
   
   // Value currently being read
   long argValue = 0;
@@ -172,7 +174,7 @@ int main(int argc, char *argv[]) {
   size_t lineSize = 32;
   long lineLength = getline(&line, &lineSize, stdin);
   
-  short i;
+  int i, c;
   piece p = 0;
   long x = 0;
   
@@ -184,7 +186,7 @@ int main(int argc, char *argv[]) {
     
     // Iterate through line characters
     while (++i < lineLength && readingStage != -1) {
-      unsigned char c = line[i];
+      c = line[i];
       if (c >= '0' && c <= '9') {
         // Read decimal digit
         if (readingStage == 1) {
@@ -274,7 +276,7 @@ void handleOutOfMemory(char description[]) {
  * - Two adjancent padding cols are not allowed
  * @return Pointer to playground
  */
-struct Playground* createPlayground() {
+struct Playground* createPlayground(void) {
   struct Playground* playground = (struct Playground*) malloc(
     sizeof(struct Playground));
   if (!playground) {
@@ -337,7 +339,7 @@ void freePlayground(struct Playground* playground) {
  * Create a col node with the default initial size.
  * @return Pointer to new col node
  */
-struct Col* createCol() {
+struct Col* createCol(void) {
   struct Col* col = (struct Col*)
     malloc(sizeof(struct Col) + sizeof(piece) * MIN_COL_SIZE);
   if (!col) {
@@ -435,7 +437,7 @@ void playgroundPlacePiece(struct Playground* playground, long x, piece p) {
   // Append piece to the top of the col stack
   col->pieces[col->count] = p;
   playgroundTrackChange(playground, col, col->count);
-  col->count++;
+  ++col->count;
 
   // Scan for lines, remove them, cause gravity and repeat the process until no
   // more lines are being identified
@@ -446,7 +448,7 @@ void playgroundPlacePiece(struct Playground* playground, long x, piece p) {
   }
 
   // Reset change state and memory optimization (col shrinking and removal)
-  for (unsigned long i = 0; i < playground->changedColsCount; i++) {
+  for (unsigned long i = 0; i < playground->changedColsCount; ++i) {
     col = playground->changedCols[i];
     if (col->count == 0 && col != playground->originCol) {
       // Found empty column not being at the origin, remove it
@@ -645,18 +647,18 @@ void playgroundRemoveCol(struct Playground* playground, struct Col* col) {
       prevCol->next = nextCol;
       nextCol->prev = prevCol;
       if (prevCol->type == COL_PADDING) {
-        prevCol->size++;
+        ++prevCol->size;
         
         if (playground->currentCol == col) {
           playground->currentCol = nextCol;
-          playground->currentX++;
+          ++playground->currentX;
         }
       } else {
-        nextCol->size++;
+        ++nextCol->size;
         
         if (playground->currentCol == col) {
           playground->currentCol = prevCol;
-          playground->currentX--;
+          --playground->currentX;
         }
       }
     } else {
@@ -669,7 +671,7 @@ void playgroundRemoveCol(struct Playground* playground, struct Col* col) {
       
       if (playground->currentCol == col) {
         playground->currentCol = prevCol;
-        playground->currentX--;
+        --playground->currentX;
       }
     }
 
@@ -681,7 +683,7 @@ void playgroundRemoveCol(struct Playground* playground, struct Col* col) {
     struct Col* startCol = col->next;
     free(startCol->prev);
     startCol->prev = NULL;
-    playground->startColX++;
+    ++playground->startColX;
     
     // Remove dangling padding col
     if (startCol->type == COL_PADDING) {
@@ -732,7 +734,7 @@ void playgroundRemoveLines(struct Playground* playground) {
   long y;
   long nextY;
   unsigned long lineLength;
-  signed short delY;
+  int delY;
 
   piece currentPiece;
   piece lineColor;
@@ -743,11 +745,11 @@ void playgroundRemoveLines(struct Playground* playground) {
   struct Col* lineStartCol;
 
   // Only consider cols where changes were applied
-  for (unsigned long i = 0; i < playground->changedColsCount; i++) {
+  for (unsigned long i = 0; i < playground->changedColsCount; ++i) {
     col = playground->changedCols[i];
 
     // For each y above changeY identify crossing horizontal and diagonal lines
-    for (y = col->changeY; y < col->count; y++) {
+    for (y = col->changeY; y < col->count; ++y) {
       currentPiece = col->pieces[y];
       
       // TODO: No need to search from pieces that are marked as removed
@@ -755,7 +757,7 @@ void playgroundRemoveLines(struct Playground* playground) {
       
       // Iterate through directions falling diagonal (-1), horizontal (0) and
       // climbing diagonal (1)
-      for (delY = -1; delY <= 1; delY++) {
+      for (delY = -1; delY <= 1; ++delY) {
         // Upper col the current line is ending
         lineEndCol = col;
 
@@ -782,7 +784,7 @@ void playgroundRemoveLines(struct Playground* playground) {
           lineEndCol = nextCol;
           nextCol = lineEndCol->next;
           nextY += delY;
-          lineLength++;
+          ++lineLength;
         }
 
         // Do the same moving backward
@@ -803,7 +805,7 @@ void playgroundRemoveLines(struct Playground* playground) {
           lineStartCol = nextCol;
           nextCol = lineStartCol->prev;
           nextY -= delY;
-          lineLength++;
+          ++lineLength;
         }
 
         if (lineLength >= MIN_LINE_COUNT) {
@@ -828,10 +830,10 @@ void playgroundRemoveLines(struct Playground* playground) {
       currentPiece = col->pieces[y];
       if (currentPiece == lineColor) {
         // Add piece to line
-        lineLength++;
+        ++lineLength;
         if (lineLength == MIN_LINE_COUNT) {
           // Min line count fulfilled, remove pieces
-          for (j = 0; j < MIN_LINE_COUNT; j++) {
+          for (j = 0; j < MIN_LINE_COUNT; ++j) {
             playgroundRemovePiece(playground, col, y + j);
           }
         } else if (lineLength > MIN_LINE_COUNT) {
@@ -912,7 +914,7 @@ void playgroundCauseGravity(struct Playground* playground) {
   struct PieceRemoval* pieceRemoval;
   
   // Iterate through removals and mark pieces as empty in the playground
-  for (i = 0; i < playground->pieceRemovalsCount; i++) {
+  for (i = 0; i < playground->pieceRemovalsCount; ++i) {
     pieceRemoval = &playground->pieceRemovals[i];
     pieceRemoval->col->pieces[pieceRemoval->y] = PIECE_EMPTY;
   }
@@ -921,14 +923,14 @@ void playgroundCauseGravity(struct Playground* playground) {
   playground->pieceRemovalsCount = 0;
   
   // Iterate through cols where changes were applied
-  for (i = 0; i < playground->changedColsCount; i++) {
+  for (i = 0; i < playground->changedColsCount; ++i) {
     col = playground->changedCols[i];
 
     // Cause gravity on a single column
     unsigned long removedPieces = 0;
-    for (unsigned long y = col->changeY; y < col->count; y++) {
+    for (unsigned long y = col->changeY; y < col->count; ++y) {
       if (col->pieces[y] == PIECE_EMPTY) {
-        removedPieces++;
+        ++removedPieces;
       } else {
         col->pieces[y - removedPieces] = col->pieces[y];
       }
@@ -951,11 +953,11 @@ void playgroundPrint(struct Playground* playground) {
     while (col) {
       if (col->type == COL_PIECES) {
         // Print column pieces
-        for (long unsigned j = 0; j < col->count; j++) {
+        for (long unsigned j = 0; j < col->count; ++j) {
           printf("%d %ld %lu\n", col->pieces[j], x, j);
         }
         // Iterate to the next col
-        x++;
+        ++x;
         col = col->next;
       } else {
         // Iterate to the next col
@@ -971,11 +973,11 @@ void playgroundPrint(struct Playground* playground) {
         printf("\n[%8ld] col %2lu/%2lu |", x, col->count, col->size);
 
         // Print column pieces
-        for (long unsigned j = 0; j < col->count; j++) {
+        for (long unsigned j = 0; j < col->count; ++j) {
           printf("%3hu|", col->pieces[j]);
         }
         // Iterate to the next col
-        x++;
+        ++x;
         col = col->next;
       } else {
         printf("\n[%8ld] --- %lu cols ---", x, col->size);
