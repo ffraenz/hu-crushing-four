@@ -28,6 +28,7 @@
 		A53032D924A38DA300335718 /* README.md */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = net.daringfireball.markdown; path = README.md; sourceTree = "<group>"; };
 		A53032DA24A38DA300335718 /* test.sh */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.script.sh; path = test.sh; sourceTree = "<group>"; };
 		A53032DB24A3916700335718 /* make.sh */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.script.sh; path = make.sh; sourceTree = "<group>"; };
+		A53FE1FE24C852A600814CDE /* tests */ = {isa = PBXFileReference; lastKnownFileType = folder; path = tests; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -47,6 +48,7 @@
 				A53032DB24A3916700335718 /* make.sh */,
 				A53032D924A38DA300335718 /* README.md */,
 				A53032DA24A38DA300335718 /* test.sh */,
+				A53FE1FE24C852A600814CDE /* tests */,
 				A51A5ABA249F79C200E841E2 /* src */,
 				A51A5AB9249F79C200E841E2 /* Products */,
 			);

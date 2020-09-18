@@ -1,7 +1,7 @@
 #!/bin/bash
 
 # Build target
-./make.sh
+./bin/make.sh
 
 # Temporary stdout write location
 TEST_STDOUT=./test.stdout
