@@ -1,5 +1,5 @@
 
-# crushing-candy
+# crushing-four
 
 This repository is one solution to an assignment that is part of the Computer Science study program at [Humboldt University of Berlin](https://www.hu-berlin.de/).
 

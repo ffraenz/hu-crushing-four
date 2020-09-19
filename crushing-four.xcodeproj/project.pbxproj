@@ -23,11 +23,10 @@
 /* End PBXCopyFilesBuildPhase section */
 
 /* Begin PBXFileReference section */
-		A51A5AB8249F79C200E841E2 /* crushing-candy */ = {isa = PBXFileReference; explicitFileType = "compiled.mach-o.executable"; includeInIndex = 0; path = "crushing-candy"; sourceTree = BUILT_PRODUCTS_DIR; };
+		A51A5AB8249F79C200E841E2 /* crushing-four */ = {isa = PBXFileReference; explicitFileType = "compiled.mach-o.executable"; includeInIndex = 0; path = "crushing-four"; sourceTree = BUILT_PRODUCTS_DIR; };
 		A51A5ABB249F79C200E841E2 /* main.c */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.c; path = main.c; sourceTree = "<group>"; };
 		A53032D924A38DA300335718 /* README.md */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = net.daringfireball.markdown; path = README.md; sourceTree = "<group>"; };
-		A53032DA24A38DA300335718 /* test.sh */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.script.sh; path = test.sh; sourceTree = "<group>"; };
-		A53032DB24A3916700335718 /* make.sh */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.script.sh; path = make.sh; sourceTree = "<group>"; };
+		A53D4EFB2516B14C0080F15E /* bin */ = {isa = PBXFileReference; lastKnownFileType = folder; path = bin; sourceTree = "<group>"; };
 		A53FE1FE24C852A600814CDE /* tests */ = {isa = PBXFileReference; lastKnownFileType = folder; path = tests; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
@@ -45,19 +44,18 @@
 		A51A5AAF249F79C200E841E2 = {
 			isa = PBXGroup;
 			children = (
-				A53032DB24A3916700335718 /* make.sh */,
 				A53032D924A38DA300335718 /* README.md */,
-				A53032DA24A38DA300335718 /* test.sh */,
 				A53FE1FE24C852A600814CDE /* tests */,
 				A51A5ABA249F79C200E841E2 /* src */,
 				A51A5AB9249F79C200E841E2 /* Products */,
+				A53D4EFB2516B14C0080F15E /* bin */,
 			);
 			sourceTree = "<group>";
 		};
 		A51A5AB9249F79C200E841E2 /* Products */ = {
 			isa = PBXGroup;
 			children = (
-				A51A5AB8249F79C200E841E2 /* crushing-candy */,
+				A51A5AB8249F79C200E841E2 /* crushing-four */,
 			);
 			name = Products;
 			sourceTree = "<group>";
@@ -73,9 +71,9 @@
 /* End PBXGroup section */
 
 /* Begin PBXNativeTarget section */
-		A51A5AB7249F79C200E841E2 /* crushing-candy */ = {
+		A51A5AB7249F79C200E841E2 /* crushing-four */ = {
 			isa = PBXNativeTarget;
-			buildConfigurationList = A51A5ABF249F79C200E841E2 /* Build configuration list for PBXNativeTarget "crushing-candy" */;
+			buildConfigurationList = A51A5ABF249F79C200E841E2 /* Build configuration list for PBXNativeTarget "crushing-four" */;
 			buildPhases = (
 				A51A5AB4249F79C200E841E2 /* Sources */,
 				A51A5AB5249F79C200E841E2 /* Frameworks */,
@@ -85,9 +83,9 @@
 			);
 			dependencies = (
 			);
-			name = "crushing-candy";
+			name = "crushing-four";
 			productName = "digisys-crushing-candy";
-			productReference = A51A5AB8249F79C200E841E2 /* crushing-candy */;
+			productReference = A51A5AB8249F79C200E841E2 /* crushing-four */;
 			productType = "com.apple.product-type.tool";
 		};
 /* End PBXNativeTarget section */
@@ -104,7 +102,7 @@
 					};
 				};
 			};
-			buildConfigurationList = A51A5AB3249F79C200E841E2 /* Build configuration list for PBXProject "crushing-candy" */;
+			buildConfigurationList = A51A5AB3249F79C200E841E2 /* Build configuration list for PBXProject "crushing-four" */;
 			compatibilityVersion = "Xcode 9.3";
 			developmentRegion = en;
 			hasScannedForEncodings = 0;
@@ -117,7 +115,7 @@
 			projectDirPath = "";
 			projectRoot = "";
 			targets = (
-				A51A5AB7249F79C200E841E2 /* crushing-candy */,
+				A51A5AB7249F79C200E841E2 /* crushing-four */,
 			);
 		};
 /* End PBXProject section */
@@ -262,7 +260,7 @@
 /* End XCBuildConfiguration section */
 
 /* Begin XCConfigurationList section */
-		A51A5AB3249F79C200E841E2 /* Build configuration list for PBXProject "crushing-candy" */ = {
+		A51A5AB3249F79C200E841E2 /* Build configuration list for PBXProject "crushing-four" */ = {
 			isa = XCConfigurationList;
 			buildConfigurations = (
 				A51A5ABD249F79C200E841E2 /* Debug */,
@@ -271,7 +269,7 @@
 			defaultConfigurationIsVisible = 0;
 			defaultConfigurationName = Release;
 		};
-		A51A5ABF249F79C200E841E2 /* Build configuration list for PBXNativeTarget "crushing-candy" */ = {
+		A51A5ABF249F79C200E841E2 /* Build configuration list for PBXNativeTarget "crushing-four" */ = {
 			isa = XCConfigurationList;
 			buildConfigurations = (
 				A51A5AC0249F79C200E841E2 /* Debug */,

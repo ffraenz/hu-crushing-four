@@ -15,9 +15,9 @@
             <BuildableReference
                BuildableIdentifier = "primary"
                BlueprintIdentifier = "A51A5AB7249F79C200E841E2"
-               BuildableName = "crushing-candy"
-               BlueprintName = "crushing-candy"
-               ReferencedContainer = "container:crushing-candy.xcodeproj">
+               BuildableName = "crushing-four"
+               BlueprintName = "crushing-four"
+               ReferencedContainer = "container:crushing-four.xcodeproj">
             </BuildableReference>
          </BuildActionEntry>
       </BuildActionEntries>
@@ -45,9 +45,9 @@
          <BuildableReference
             BuildableIdentifier = "primary"
             BlueprintIdentifier = "A51A5AB7249F79C200E841E2"
-            BuildableName = "crushing-candy"
-            BlueprintName = "crushing-candy"
-            ReferencedContainer = "container:crushing-candy.xcodeproj">
+            BuildableName = "crushing-four"
+            BlueprintName = "crushing-four"
+            ReferencedContainer = "container:crushing-four.xcodeproj">
          </BuildableReference>
       </BuildableProductRunnable>
       <CommandLineArguments>
@@ -68,9 +68,9 @@
          <BuildableReference
             BuildableIdentifier = "primary"
             BlueprintIdentifier = "A51A5AB7249F79C200E841E2"
-            BuildableName = "crushing-candy"
-            BlueprintName = "crushing-candy"
-            ReferencedContainer = "container:crushing-candy.xcodeproj">
+            BuildableName = "crushing-four"
+            BlueprintName = "crushing-four"
+            ReferencedContainer = "container:crushing-four.xcodeproj">
          </BuildableReference>
       </BuildableProductRunnable>
    </ProfileAction>
